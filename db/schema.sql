@@ -20,7 +20,7 @@ CREATE TABLE role (
     salary DECIMAL,
     department_id INT NOT NULL, 
     FOREIGN KEY (department_id) REFERENCES department(id)
-    );
+);
 
 
 -- Create Employee Table --

@@ -1,5 +1,7 @@
-const mysql = require ('mysql2')
-const inquirer = require ('inquirer')
+const mysql = require('mysql2');
+const inquirer = require('inquirer');
+const Queries = require('./queries/queries.js');
+require("console.table")
 
 const connection = mysql.createConnection({
     user: 'root',
@@ -25,6 +27,96 @@ const questions = [
         ]
     }
 ];
+
+function viewAllEmployees () {
+    connection.query(`SELECT e1.first_name, e1.last_name, title, salary, name FROM employee e1 
+    JOIN role ON e1.role_id = role.id 
+    JOIN department ON role.department_id = department.id 
+    LEFT JOIN employee e2 ON e1.manager_id = e2.id`, function (err, results, fields) {
+        console.table(results);
+        init();
+    });
+}
+
+function addEmployee () {
+    connection.query(`SELECT * FROM role`, function (err, results) {
+        console.log(results)
+
+        const roleChoices = results.map(function(role){
+            return {
+                name: role.title,
+                value: role.id
+            };
+        })
+    connection.query(`SELECT * FROM employee`, function (err, results) {
+        console.log(results);
+
+        const managerChoice = results.map(function(manager){
+            return {
+                name: manager.first_name + ' ' + manager.last_name,
+                value: manager.id
+            }
+        })
+        inquirer.prompt([
+            {
+                type: "input",
+                message: "What is the employee's first name?",
+                name: "f_name"
+            },
+            {
+                type: "input",
+                message: "What is the employee's last name?",
+                name: "l_name"
+            },
+            {
+
+                type: "list",
+                message: "What is the employee's role?",
+                name: "role_id",
+                choices: roleChoices
+            },
+            {
+                type: "list",
+                message: "Who is the employee's manager?",
+                name: "manager_id",
+                choices: managerChoice
+            }
+        ]).then(function (data) {
+            connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
+            VALUES ("${data.f_name}", "${data.l_name}", ${data.role_id}, ${data.manager_id})`, function (err, results, fields) {
+               if(err) {
+                console.log(err);
+                return;
+               }
+               console.log(results);
+               init();
+            });
+        })
+    })
+
+        // const roleChoices = results;
+        
+    })
+}
+
+
+// TODO: Create a function to initialize app
+function init() {
+
+    inquirer.prompt(questions).then(function (data) {
+        if (data.choices === "View All Employees") {
+            viewAllEmployees()
+        };
+        if (data.choices === "Add Employee") {
+            addEmployee()
+        }
+        // init();
+    })
+};
+
+
+// Function call to initialize app
+init();
 
 
 
